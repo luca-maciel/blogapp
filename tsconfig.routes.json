@@ -1,0 +1,10 @@
+{
+    "extends": "./tsconfig.app.json",
+    "compilerOptions": {
+        "rootDir": "./typescript",
+        "outDir": "./routes"
+    },
+    "files": [
+        "typescript/routes.ts"
+    ]
+}

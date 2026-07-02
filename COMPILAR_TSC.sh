@@ -1,0 +1,1 @@
+npx tsc -p tsconfig.models.json && npx tsc -p tsconfig.routes.json && npx tsc -p tsconfig.app.json && npx tsc -p tsconfig.Categoria.json && npx tsc -p tsconfig.Postagem.json
