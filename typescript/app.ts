@@ -88,17 +88,34 @@ app.get('/postagem/:slug', (req:any, res:any)=>{
         res.redirect("/");
     });
 });
-//             console.log(postagem);
-//             res.render("postagem/index", {postagem:postagem});
-//         }else{
-//             req.flash("error_msg", "Esta postagem não existe");
-//             res.redirect("/");
-//         }
-//     }).catch((err:any)=>{
-//         req.flash("error_msg", "Houve um erro interno");
-//         res.redirect("/");
-//     });
-// }); 
+
+app.get('/categorias', (req:any, res:any)=>{
+    Categoria.find().lean().then((categorias:any)=>{
+        res.render("categorias/index", {categorias:categorias});
+    }).catch((err:any)=>{
+        req.flash("error_msg", "Houve um erro ao listar as categorias");
+        res.redirect("/");
+    });
+});
+
+app.get('/categorias/:slug', (req:any, res:any)=>{
+    Categoria.findOne({slug:req.params.slug}).lean().then((categoria:any)=>{
+        if (categoria){
+            Postagem.find({categoria:categoria._id}).lean().then((postagens:any)=>{
+                res.render("categorias/postagens", {postagens:postagens, categoria:categoria});
+            }).catch((err:any)=>{
+                req.flash("error_msg", "Houve um erro ao listar os posts");
+                res.redirect("/");
+            });
+        }else{
+            req.flash("error_msg", "Esta categoria não existe");
+            res.redirect("/");
+        }
+    }).catch((err:any)=>{
+        req.flash("error_msg", "Houve um erro ao carregar a página desta categoria");
+        res.redirect("/");
+    });
+});
 
 app.get('/404', (req:any, res:any)=>{
     res.send("Erro 404!");
