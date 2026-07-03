@@ -7,6 +7,10 @@ const path:any = require('path');
 const mongoose:any = require('mongoose');
 const session:any = require('express-session');
 const flash:any = require('connect-flash');
+require("./models/Postagem");
+const Postagem:any = mongoose.model("postagens");
+require("./models/Categoria");
+const Categoria:any = mongoose.model("categorias");
 
 // CONFIGS.
 //SESSÃO
@@ -45,7 +49,6 @@ mongoose.connect("mongodb://localhost:27017/blogapp").then(()=>{
 
 app.use(express.static(path.join(__dirname, "public")));
 
-
 // Exemplo de middleware:
 // app.use((req:any, res:any, next:any)=>{
 //     console.log("TEste middleware");
@@ -56,7 +59,50 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // ROTAS
 
-app.use('/', routes);
+app.use('/admin', routes);
+
+app.get('/', (req:any, res:any)=>{
+    Postagem.find().lean().populate("categoria").sort({data:"desc"}).then((postagens:any)=>{
+        res.render("index", {postagens:postagens});
+    }).catch((err:any)=>{
+        req.flash("error_msg", "Houve um erro interno");
+        res.redirect("/404");
+    });
+});
+
+app.get('/postagem/:slug', (req:any, res:any)=>{
+    Postagem.findOne({slug:req.params.slug}).lean().then((postagem:any)=>{
+        if (postagem){
+            Categoria.findOne({_id:postagem.categoria}).lean().then((categoria:any)=>{
+                res.render("postagem/index", {postagem:postagem, categoria:categoria});
+            }).catch((err:any)=>{
+                req.flash("error_msg", "Houve um erro ao listar as categorias");
+                res.redirect("/");
+            });
+        }else{
+            req.flash("error_msg", "Esta postagem não existe");
+            res.redirect("/");
+        }
+    }).catch((err:any)=>{
+        req.flash("error_msg", "Houve um erro interno");
+        res.redirect("/");
+    });
+});
+//             console.log(postagem);
+//             res.render("postagem/index", {postagem:postagem});
+//         }else{
+//             req.flash("error_msg", "Esta postagem não existe");
+//             res.redirect("/");
+//         }
+//     }).catch((err:any)=>{
+//         req.flash("error_msg", "Houve um erro interno");
+//         res.redirect("/");
+//     });
+// }); 
+
+app.get('/404', (req:any, res:any)=>{
+    res.send("Erro 404!");
+});
 
 // ==========================
 
