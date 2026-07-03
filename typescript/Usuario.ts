@@ -13,6 +13,10 @@ const Usuario:any = new Schema({
     senha:{
         type: String,
         required: true
+    },
+    eAdmin:{
+        type: Number,
+        default: 0
     }
 });
 

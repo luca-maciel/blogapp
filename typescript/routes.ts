@@ -1,10 +1,13 @@
 const express:any = require('express');
 const router:any = express.Router();
 const mongoose:any = require('mongoose');
+const bcrypt:any = require('bcryptjs');
 require("../models/Categoria");
 const Categoria:any = mongoose.model("categorias");
 require("../models/Postagem");
 const Postagem:any = mongoose.model("postagens");
+require("../models/Usuario");
+const Usuario:any = mongoose.model("usuarios");
 
 router.get('/', (req:any, res:any)=>{
     res.render("admin/index");
@@ -180,6 +183,75 @@ router.post('/postagens/deletar', (req:any, res:any)=>{
         req.flash("error_msg", "Houve um erro ao deletar a postagem");
         res.redirect("/admin/postagens");
     });
+});
+
+router.get('/registro', (req:any, res:any)=>{
+    res.render("usuarios/registro");
+});
+
+router.post('/registro', (req:any, res:any)=>{
+    var erros:any[] = [];
+
+    if (!req.body.nome || typeof req.body.nome == undefined || req.body.nome == null){
+        erros.push({texto: "Nome inválido"});
+    };
+    
+    if (!req.body.email || typeof req.body.email == undefined || req.body.email == null){
+        erros.push({texto: "Email inválido"});
+    };
+
+    if (!req.body.senha || typeof req.body.senha == undefined || req.body.senha == null){
+        erros.push({texto: "Senha inválida"});
+    };
+
+    if (req.body.senha.length < 4){
+        erros.push({texto: "Senha muito curta"});
+    };
+
+    if (req.body.senha != req.body.senha2){
+        erros.push({texto: "Senhas não coincidem"});
+    };
+
+    if (erros.length > 0){
+        res.render("usuarios/registro", {erros: erros});
+    }else{
+        Usuario.findOne({email: req.body.email}).then((usuario:any)=>{
+            if (usuario){
+                req.flash("error_msg", "Já existe um usuário com esse e-mail.");
+                res.redirect("/admin/registro");
+            }
+            else{
+                const novoUsuario = new Usuario({
+                    nome: req.body.nome,
+                    email: req.body.email,
+                    senha: req.body.senha
+                });
+
+                bcrypt.genSalt(10, (erro:any, salt:any)=>{
+                    bcrypt.hash(novoUsuario.senha, salt, (erro:any, hash:any)=>{
+                        if (erro){
+                            req.flash("error_msg", "Houve um erro ao tentar salvar usuário");
+                            res.redirect("/");
+                        };
+                        novoUsuario.senha = hash;
+                        novoUsuario.save().then(()=>{
+                            req.flash("success_msg", "Usuário registrado com sucesso");
+                            res.redirect("/");
+                        }).catch((err:any)=>{
+                            req.flash("error_msg", "Houve um erro ao tentar criar o usuário. Tente novamente.");
+                        });
+                    });
+                });
+            };
+        }).catch((err:any)=>{
+            req.flash("error_msg", "Houve um erro interno");
+            res.redirect("/");
+        });
+    };
+});
+
+router.get("/login", (req:any, res:any)=>{
+    res.render("usuarios/login");
 });
 
 module.exports = router;
